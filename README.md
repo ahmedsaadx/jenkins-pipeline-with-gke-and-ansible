@@ -40,6 +40,27 @@ This repository contains code and instructions for setting up a Jenkins pipeline
 
 ![image](pics/private_instances.png)
 
+### ansibele integration with  slack and send  notifiaction 
+![image](pics/slack.png)
+
+### kubernetes resources 
+![image](pics/k8s.png)
+![image](pics/k8s1.png)
+
+## pipeline 
+![image](pics/pipeline.png)
+![image](pics/pipeline2.png)
+
+## dockerhub images
+![image](pics/image1.png)
+![image](pics/image2.png)
+
+## app 
+![image](pics/app.png)
+## prometheus 
+![image](pics/prometheus.png)
+![image](pics/prometheus1.png)
+
  
     
 
