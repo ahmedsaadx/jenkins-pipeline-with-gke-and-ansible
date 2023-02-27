@@ -1,0 +1,5 @@
+[gcp:vars]
+ansible_user='mrkernel'
+
+[gcp]
+bastion-host 

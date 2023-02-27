@@ -1,0 +1,152 @@
+---
+- hosts: gcp
+  become: true
+  become_method: sudo
+  vars:
+    ansible_become_timeout: 25
+    kubeconfig: "/home/mrkernel/.kube/config"
+    token: "your token"
+  tasks:
+    - name: Update packages and install kubctl ,gcloud-auth
+      apt:
+        update_cache : yes
+        pkg:
+          - kubectl
+          - google-cloud-sdk-gke-gcloud-auth-plugin
+          - python
+          - python3-pip
+          - docker.io
+    - name: run shell script
+      become_user: mrkernel
+      ansible.builtin.command: gcloud container clusters get-credentials private --zone us-east1-b --project saad-375811
+    - name: Copy k8s folder
+      become_user: mrkernel
+      copy:
+        src: k8s_files/
+        dest: /home/mrkernel
+        owner: mrkernel
+        group: mrkernel
+        mode: '0755'
+    - name: Copy prometheus folder
+      become_user: mrkernel
+      copy:
+        src: prometheus/
+        dest: /home/mrkernel
+        owner: mrkernel
+        group: mrkernel
+        mode: '0755'    
+    - name: install pre-requisites
+      pip:
+        name:
+        - openshift
+        - pyyaml
+        - kubernetes 
+        - jsonpatch  
+    
+    - name: Create a namespace
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/namespace.yaml
+    
+    - name: Create a ServiceAccount and ClusterRole
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/serviceaccount.yaml 
+    
+    - name: Create a PV and PVC
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/volume.yaml
+    
+    - name: Create a daemonset
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/deamonset.yaml
+     
+    
+    - name: Create a Deployment
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/deployment.yaml
+    - name: Create a LB service
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/service.yaml            
+    - name: notify Slack that the job is Successful
+      community.general.slack:
+        token: "{{ token }}"
+        msg: |
+          ### StatusUpdate ###
+          – ------------------------------------
+          ``
+          `Server`: jenkins server is up 
+          `Status`:  Job Successful.
+          – ------------------------------------
+        channel: 'ansible'
+        color: good
+        link_names: 0
+        parse: 'none'     
+    
+    
+    - name: Create a prometheusnamespace
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/namespace.yaml
+    
+    
+    - name: Create a clusterRole
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/clusterRole.yaml
+    
+    - name: Create a config-map
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/config-map.yaml       
+    
+    - name: Create a prometheus Deployment
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/prometheus-deployment.yaml
+
+    - name: Create a prometheus lb
+      become_user: mrkernel
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        src: /home/mrkernel/prometheus-service.yaml    
+    
+    - name: notify Slack that the job is Successful
+      community.general.slack:
+        token: "{{ token }}"
+        msg: |
+          ### StatusUpdate ###
+          – ------------------------------------
+          ``
+          `Server`: prometheus server is up 
+          `Status`:   Job Successful.
+          – ------------------------------------
+        channel: 'ansible'
+        color: good
+        link_names: 0
+        parse: 'none'    
